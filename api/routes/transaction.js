@@ -3,27 +3,33 @@ const mongoose = require('mongoose');
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
+const Transaction = require('../models/Transaction')
+const Customer = require('../models/customer')
 const Vendor = require('../models/vendor')
 const { JWT_KEY } = require('../../keys')
 const requireToken = require('../middleware/requireToken')
 
-
 router.get("/", async (req, res, next) => {
-
+    const id = req.params.id;
     try {
-        await Vendor.find()
+        await Transaction.find()
+            //populating both customer's and vendor's email (name) to show on frontend
+            .populate('customerID vendorID', 'email')  
+            .exec()
             .then(result => {
                 const response = {
                     count: result.length,
-                    vendors: result.map(doc => {
+                    Transaction: result.map(doc => {
                         return {
                             id: doc._id,
-                            email: doc.email,
-                            password: doc.password,
+                            amount: doc.amount,
+                            customerID: doc.customerID,
+                            vendorID: doc.vendorID,
+                            createdAt: doc.createdAt,
                         }
                     })
                 }
-                console.log(response)
+                //console.log(response)
                 res.status(200).json(response)
             })
     } catch (err) {
@@ -33,83 +39,104 @@ router.get("/", async (req, res, next) => {
 
 });
 
-router.post('/signup/', (req, res, next) => {
-
-    //const {email,password} = req.body;
+router.get("/customer/:id", async (req, res, next) => {
+    const id = req.params.id;
     try {
-        bcrypt.hash(req.body.password, 10, async (err, hash) => {
-            if (err) {
-                return res.status(500).json({
-                    error: err
-                });
-            } else {
-                const vendor = new Vendor({
-                    _id: new mongoose.Types.ObjectId(),
-                    email: req.body.email,
-                    password: hash,
-                });
-
-                await vendor.save()
-                    .then(result => {
-                        console.log(result)
-                        res.status(201).json({
-                            message: "Successfully Created a vendor",
-                            CreatedVendor: response = {
-                                _id: result._id,
-                                email: result.email,
-                                password: result.password,
-                                request: {
-                                    type: 'GET',
-                                    url: "http://localhost:3000/vendors/" + result._id
-                                }
-                            }
-                        });
-                    });
-            }
-        });
-        //const token = jwt.sign({userId:vendor._id},jwtKey);
-        //res.status(200).json(response);
+        await Transaction.find({ customerID: id })
+            .populate('customerID vendorID', 'email')
+            .exec()
+            .then(result => {
+                const response = {
+                    count: result.length,
+                    Transaction: result.map(doc => {
+                        return {
+                            id: doc._id,
+                            amount: doc.amount,
+                            customerID: doc.customerID,
+                            vendorID: doc.vendorID,
+                            createdAt: doc.createdAt
+                        }
+                    })
+                }
+                //console.log(response)
+                res.status(200).json(response)
+            })
+    } catch (err) {
+        console.log(err)
+        res.status(500).json({ error: err })
     }
-    catch (err) {
-        res.status(422).send({ "Error": err.message });
-    }
-    //res.send("Hey There 11")
 
 });
 
-router.post('/login/', async (req, res, next) => {
-    const { email, password } = req.body;
-    const vendor = await Vendor.findOne({ email });
-    if (!vendor) {
-        return res.status(422).send({ "Error": "Email or password is incorrect" });
-    }
+router.get("/vendor/:id", async (req, res, next) => {
+    const id = req.params.id;
     try {
-        bcrypt.compare(password, vendor.password, (err, result) => {
-            if (err) {
-                return res.status(401).json({
-                    message: "Auth failed"
-                });
-            }
-            if (result) {
-                const token = jwt.sign(
-                    {
-                        email: vendor.email,
-                        userId: vendor._id
-                    },
-                    JWT_KEY
-                );
-                return res.status(200).json({
-                    message: "Auth successful",
-                    token: token
-                });
-            }
-            res.status(401).json({
-                message: "Auth failed"
-            });
-        });
+        await Transaction.find({ vendorID: id })
+            .populate('customerID vendorID', 'email')
+            .exec()
+            .then(result => {
+                const response = {
+                    count: result.length,
+                    Transaction: result.map(doc => {
+                        return {
+                            id: doc._id,
+                            amount: doc.amount,
+                            customerID: doc.customerID,
+                            vendorID: doc.vendorID,
+                            createdAt: doc.createdAt
+                        }
+                    })
+                }
+                //console.log(response)
+                res.status(200).json(response)
+            })
+    } catch (err) {
+        console.log(err)
+        res.status(500).json({ error: err })
     }
-    catch{
-        return res.status(422).send({ "Error": "Email or password is incorrect" });
+
+});
+
+router.post("/", async (req, res, next) => {
+    try {
+        await Customer.findById({ _id: req.body.customerID })   //checking if customer exists
+            .then(customer => {
+                console.log(customer)
+                if (!customer)
+                    return res.status(404).json({ error: "Not a valid customer" }) //if not send error msg
+                else {
+                    Vendor.findById({ _id: req.body.vendorID }) //checking if vendor exists
+                        .then(vendor => {
+                            if (!vendor)
+                                return res.status(404).json({ error: "Not a valid vendor" }) //if not send error msg
+                            else {
+                                const transaction = new Transaction({
+                                    _id: new mongoose.Types.ObjectId(),
+                                    amount: req.body.amount,
+                                    customerID: req.body.customerID,
+                                    vendorID: req.body.vendorID,
+                                });
+                                return transaction.save()
+                                    .then(result => {
+                                        //console.log(result);
+                                        res.status(201).json({ result });
+                                    })
+
+                                    .catch(error => {
+                                        console.log(error)
+                                        res.status(500).json({ error })
+                                    })
+                            }
+                        }).catch(error => {
+                            res.status(500).json({ error })
+                        })
+                }
+            }).catch(error => {
+                res.status(500).json({ error })
+            });
+    } catch (err) {
+        console.log(err)
+        res.status(500).json({ error123: err })
     }
 });
 
@@ -117,12 +144,12 @@ router.delete("/:id", async (req, res, next) => {
     const id = req.params.id;
 
     try {
-        await Vendor.remove({ _id: id })
+        await Transaction.remove({ _id: id })
             .then(result => {
                 console.log(result)
-                res.status(200).json({ message: "Vendor Deleted" })
+                res.status(200).json({ message: "Transaction Deleted" })
             })
-    } catch(err) {
+    } catch (err) {
         console.log(err)
         res.status(500).json({ error: err })
     }
