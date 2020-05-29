@@ -7,6 +7,10 @@ const Customer = require('../models/customer')
 const { JWT_KEY } = require('../../keys')
 const requireToken = require('../middleware/requireToken')
 
+router.get('/token/', requireToken, (req, res) => {
+    //console.log("Email is: ")
+    res.status(200).json(req.user);
+})
 
 router.get("/", async (req, res, next) => {
 
@@ -20,13 +24,16 @@ router.get("/", async (req, res, next) => {
                             id: doc._id,
                             email: doc.email,
                             password: doc.password,
+                            name: doc.name,
+                            phone: doc.phone,
+                            cnic: doc.cnic,
                         }
                     })
                 }
                 //console.log(response)
                 res.status(200).json(response)
             })
-            .catch(err=>{
+            .catch(err => {
                 res.status(422).send({ "Error": err.message });
             });
     } catch (err) {
@@ -50,6 +57,9 @@ router.post('/signup/', (req, res, next) => {
                     _id: new mongoose.Types.ObjectId(),
                     email: req.body.email,
                     password: hash,
+                    name: req.body.name,
+                    phone: req.body.phone,
+                    cnic: req.body.cnic,
                 });
 
                 await customer.save()
@@ -61,12 +71,15 @@ router.post('/signup/', (req, res, next) => {
                                 _id: result._id,
                                 email: result.email,
                                 password: result.password,
+                                name: result.name,
+                                phone: result.phone,
+                                cnic: result.cnic,
                             }
                         })
-                        .catch(err=>{
-                            res.status(422).send({ "Error": err.message });
-                        });
-                    });
+                    })
+                    .catch(err => {
+                        res.status(422).send({ "Error": err.message });
+                    })
             }
         });
         //const token = jwt.sign({userId:customer._id},jwtKey);
@@ -124,10 +137,10 @@ router.delete("/:id", async (req, res, next) => {
                 //console.log(result)
                 res.status(200).json({ message: "Customer Deleted" })
             })
-            .catch(err=>{
+            .catch(err => {
                 res.status(422).send({ "Error": err.message });
             })
-    } catch(err) {
+    } catch (err) {
         console.log(err)
         res.status(500).json({ error: err })
     }

@@ -15,7 +15,7 @@ app.use(morgan("dev"));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.use((req, res, next) => {
+app.use((req, res, next) => {           //CORS
     res.header("Access-Control-Allow-Origin", '*');
     res.header(
         "Access-Control-Allow-Headers",
