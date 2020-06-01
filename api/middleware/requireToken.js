@@ -21,11 +21,11 @@ module.exports = (req, res, next) => {
         if (err) {
             res.status(401).send({ error: 'You must be logged in 2' });
         }
-        console.log(payload);
+        //console.log(payload);
         const { userId } = payload;
-        if (type == "Customer")
+        if (type == "customer")
             user = await Customer.findById(userId);
-        if (type == "Vendor")
+        if (type == "vendor")
             user = await Vendor.findById(userId);
         req.user = user;
         next();

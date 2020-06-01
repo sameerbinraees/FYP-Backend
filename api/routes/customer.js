@@ -8,7 +8,7 @@ const { JWT_KEY } = require('../../keys')
 const requireToken = require('../middleware/requireToken')
 
 router.get('/token/', requireToken, (req, res) => {
-    //console.log("Email is: ")
+    //console.log(req.user)
     res.status(200).json(req.user);
 })
 

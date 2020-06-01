@@ -1,0 +1,4 @@
+GET http://localhost:3000/transactions/vendor/5ed3e251f69f1c2734185cb4?page=2&limit=2
+
+//GET http://localhost:3000/transactions/customer/5ecfd735bcb3dc4c6883952b?page2&limit=4
+
