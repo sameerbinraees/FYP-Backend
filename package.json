@@ -17,6 +17,7 @@
     "bcrypt": "^3.0.6",
     "dotenv": "^8.2.0",
     "jsonwebtoken": "^8.5.1",
+    "minimist": "^1.2.5",
     "mongoose": "^5.9.3",
     "morgan": "^1.9.1",
     "react-native-dotenv": "^0.2.0"
