@@ -106,6 +106,7 @@ router.post('/login/', async (req, res, next) => {
                 });
             }
             if (result) {
+                let user = {}
                 const token = jwt.sign(
                     {
                         email: customer.email,
@@ -113,10 +114,14 @@ router.post('/login/', async (req, res, next) => {
                     },
                     JWT_KEY
                 );
-                return res.status(200).json({
-                    message: "Auth successful",
-                    token: token
-                });
+
+                //console.log(customer)
+                return res.status(200).json(
+                    {
+                        message: "Auth successful",
+                        token: token,
+                        user: customer
+                    });
             }
             res.status(401).json({
                 message: "Auth failed"
