@@ -6,8 +6,11 @@ const jwt = require('jsonwebtoken');
 const Transaction = require('../models/Transaction')
 const Customer = require('../models/customer')
 const Vendor = require('../models/vendor')
-const { JWT_KEY } = require('../../keys')
+const { JWT_KEY, accountSid, authToken } = require('../../keys')
 const requireToken = require('../middleware/requireToken')
+
+const client = require('twilio')(accountSid, authToken);
+
 
 router.get("/", async (req, res, next) => {
     const id = req.params.id;
@@ -114,16 +117,30 @@ router.post("/", async (req, res, next) => {
                             if (!vendor)
                                 return res.status(404).json({ Error: "Not a valid vendor" }) //if not send error msg
                             else {
+                                const number = req.body.number
+                                const amount = req.body.amount
+                                //console.log(number)
                                 const transaction = new Transaction({
                                     _id: new mongoose.Types.ObjectId(),
                                     amount: req.body.amount,
                                     customerID: req.body.customerID,
                                     vendorID: req.body.vendorID,
                                 });
+                                //console.log(`The transaction of ammount ${amount} has been recorded successfully.`);
+                                //console.log('+92' + number)
                                 return transaction.save()
                                     .then(result => {
-                                        //console.log(result);
-                                        res.status(201).json({ result });
+                                        console.log(result);
+                                        client.messages.create({
+                                            body: `The transaction of amount ${amount} has been recorded successfully.`,
+                                            from: '+12015797091',
+                                            to: '+92' + number
+                                        }).then((message) => {
+                                            //console.log(message.sid)
+                                            res.status(201).json({ result });
+                                        }).catch(Error => {
+                                            res.status(500).json({ Error })
+                                        })
                                     })
 
                                     .catch(Error => {
@@ -143,6 +160,7 @@ router.post("/", async (req, res, next) => {
         res.status(500).json({ Error: err })
     }
 });
+
 
 router.delete("/:id", async (req, res, next) => {
     const id = req.params.id;
@@ -171,8 +189,6 @@ function paginatedResults(model) {
         const endIndex = page * limit
 
         const results = {}
-
-        console.log("Andar")
 
         if (model === Vendor) {
 

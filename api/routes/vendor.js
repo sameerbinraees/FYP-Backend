@@ -102,7 +102,7 @@ router.post('/login/', async (req, res, next) => {
         bcrypt.compare(password, vendor.password, (err, result) => {
             if (err) {
                 return res.status(401).json({
-                    message: "Auth failed"
+                    "Error": "Email or password is incorrect"
                 });
             }
             if (result) {
@@ -120,7 +120,7 @@ router.post('/login/', async (req, res, next) => {
                 });
             }
             res.status(401).json({
-                message: "Auth failed"
+               "Error": "Email or password is incorrect"
             });
         });
     }
