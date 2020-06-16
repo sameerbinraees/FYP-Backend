@@ -132,7 +132,7 @@ router.post("/", async (req, res, next) => {
                                     .then(result => {
                                         console.log(result);
                                         client.messages.create({
-                                            body: `The transaction of amount ${amount} has been recorded successfully.`,
+                                            body: `Dear Customer, the transaction of amount Rs. ${amount} has been recorded successfully.`,
                                             from: '+12015797091',
                                             to: '+92' + number
                                         }).then((message) => {
